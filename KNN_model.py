@@ -1,22 +1,24 @@
 import joblib
+import os
 import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import classification_report, accuracy_score
 
 
-#load vector data from hog
-X_train = joblib.load("data/hog/hog_train_features.pkl")
-y_train = joblib.load("data/hog/hog_train_labels.pkl")
-X_val = joblib.load("data/hog/hog_val_features.pkl")
-y_val = joblib.load("data/hog/hog_val_labels.pkl")
+#load vector data from cnn
+FEATURE_PATH = "data/cnn_features"
 
+X_train = joblib.load(os.path.join(FEATURE_PATH, "train_features.pkl"))
+y_train = joblib.load(os.path.join(FEATURE_PATH, "train_labels.pkl"))
+X_val = joblib.load(os.path.join(FEATURE_PATH, "val_features.pkl"))
+y_val = joblib.load(os.path.join(FEATURE_PATH, "val_labels.pkl"))
 print("Train features:",X_train.shape)
 print("Validation features:",X_val.shape)
 
 
 #Feacture Scaling
-scaler = StandardScaler()
+scaler = MinMaxScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_val_scaled = scaler.transform(X_val)
 
@@ -40,7 +42,7 @@ print(classification_report(y_val, val_pred,target_names=class_names, zero_divis
 
 #---------------------------------------- unknown class ------------------------------------------------
 # Create 5 samples of random noise to represent truly Unknown items for test only
-fake_unknown_images = np.random.rand(5, 8100) 
+fake_unknown_images = np.random.rand(5, 4096) 
 
 # Combine validation data with fake one
 X_test_combined = np.vstack([X_val, fake_unknown_images])
@@ -51,7 +53,7 @@ print(f"\nCreated combined test set: {X_test_combined.shape[0]} total samples.")
 
 #unknown class detection
 def predict_with_unknown_knn(model, X, distance_threshold):
-    scaler = StandardScaler()
+    scaler = MinMaxScaler()
     X_scaled = scaler.fit_transform(X)
     # Calculate distance to the single nearest neighbor
     distances, index= model.kneighbors(X_scaled, n_neighbors=1)
@@ -67,8 +69,8 @@ def predict_with_unknown_knn(model, X, distance_threshold):
 # Use the original scaled validation data to check distance values
 distances, index = knn.kneighbors(X_val_scaled, n_neighbors=1)
 print("Distance(Known Val Set) min, mean, max:", distances.min(), distances.mean(), distances.max())
-#choose threshold above the maximum distance (127) by small value 
-DISTANCE_THRESHOLD = 130
+#choose threshold above the maximum distance (13) by small value 
+DISTANCE_THRESHOLD = 15
 
 
 #prediction
@@ -80,9 +82,9 @@ print(classification_report(y_test_combined, val_pred_unknown_combined, target_n
 
 
 #save the models
-joblib.dump(knn, "knn_model.pkl")
-joblib.dump(scaler, "knn_scaler.pkl")
-joblib.dump(DISTANCE_THRESHOLD, "knn_unknown_threshold.pkl")
+joblib.dump(knn, "models/knn_model.pkl")
+joblib.dump(scaler, "models/knn_scaler.pkl")
+joblib.dump(DISTANCE_THRESHOLD, "models/knn_unknown_threshold.pkl")
 
 print("\nSaved:")
 print("knn_model.pkl")
