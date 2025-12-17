@@ -1,22 +1,16 @@
 import os
 import cv2
-import numpy as np # Added numpy
-
+import numpy as np 
 from loading_data import CLASS_NAMES, RAW_PATH
 from save_augmented_data import AUG_PATH
 
 PROCESSED_PATH = "data/processed/"
 
 def preprocess_image(img, size=(224, 224)):
-    """
-    Adjusted for CNN (MobileNetV2/VGG16): 
-    - Maintains 3 channels (RGB)
-    - Resizes to 224x224
-    """
+
     # 1. Resize to 224x224
     img = cv2.resize(img, size)
-    
-    # 2. REMOVED Grayscale conversion. CNNs need 3 channels (RGB).
+
     # If the image is accidentally grayscale, convert it to BGR/RGB
     if len(img.shape) == 2:
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
