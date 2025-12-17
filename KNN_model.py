@@ -7,7 +7,7 @@ from sklearn.metrics import classification_report, accuracy_score
 
 
 #load vector data from cnn
-FEATURE_PATH = "data/cnn_features"
+FEATURE_PATH = "data/MobileNet_features"
 
 X_train = joblib.load(os.path.join(FEATURE_PATH, "train_features.pkl"))
 y_train = joblib.load(os.path.join(FEATURE_PATH, "train_labels.pkl"))
@@ -41,8 +41,8 @@ print(classification_report(y_val, val_pred,target_names=class_names, zero_divis
 
 
 #---------------------------------------- unknown class ------------------------------------------------
-# Create 5 samples of random noise to represent truly Unknown items for test only
-fake_unknown_images = np.random.rand(5, 4096) 
+# Create 5 samples of unknown images
+fake_unknown_images = np.random.uniform(low=10.0, high=20.0, size=(5, 1280))
 
 # Combine validation data with fake one
 X_test_combined = np.vstack([X_val, fake_unknown_images])
@@ -52,9 +52,8 @@ print(f"\nCreated combined test set: {X_test_combined.shape[0]} total samples.")
 
 
 #unknown class detection
-def predict_with_unknown_knn(model, X, distance_threshold):
-    scaler = MinMaxScaler()
-    X_scaled = scaler.fit_transform(X)
+def predict_with_unknown_knn(model,scaler, X, distance_threshold):
+    X_scaled = scaler.transform(X)
     # Calculate distance to the single nearest neighbor
     distances, index= model.kneighbors(X_scaled, n_neighbors=1)
     preds = []
@@ -69,12 +68,13 @@ def predict_with_unknown_knn(model, X, distance_threshold):
 # Use the original scaled validation data to check distance values
 distances, index = knn.kneighbors(X_val_scaled, n_neighbors=1)
 print("Distance(Known Val Set) min, mean, max:", distances.min(), distances.mean(), distances.max())
-#choose threshold above the maximum distance (13) by small value 
-DISTANCE_THRESHOLD = 15
+#choose threshold above the maximum distance (6) by small value 
+
+DISTANCE_THRESHOLD = 8
 
 
 #prediction
-val_pred_unknown_combined = predict_with_unknown_knn(knn,X_test_combined, DISTANCE_THRESHOLD)
+val_pred_unknown_combined = predict_with_unknown_knn(knn,scaler,X_test_combined, DISTANCE_THRESHOLD)
 acc2=accuracy_score(y_test_combined,val_pred_unknown_combined)
 print("\n Validation Accuracy (including Unknown class):", acc2)
 class_names2 = ['Glass( 0)', 'Paper (1)', 'Cardboard (2)', 'Plastic (3)', 'Metal (4)', 'Trash (5)', 'Unknown (6)']

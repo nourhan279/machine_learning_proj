@@ -12,7 +12,7 @@ from sklearn.metrics import classification_report, accuracy_score
 # ===========================================================
 
 # FEATURE_PATH = "data/cnn_features"
-FEATURE_PATH = "data/MobileNet_svm_features"
+FEATURE_PATH = "data/MobileNet_features"
 
 X_train = joblib.load(os.path.join(FEATURE_PATH, "train_features.pkl"))
 y_train = joblib.load(os.path.join(FEATURE_PATH, "train_labels.pkl"))
