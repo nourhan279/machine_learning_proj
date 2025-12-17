@@ -11,7 +11,8 @@ from sklearn.metrics import classification_report, accuracy_score
 # 1️⃣ Load CNN feature files
 # ===========================================================
 
-FEATURE_PATH = "data/cnn_features"
+# FEATURE_PATH = "data/cnn_features"
+FEATURE_PATH = "data/MobileNet_svm_features"
 
 X_train = joblib.load(os.path.join(FEATURE_PATH, "train_features.pkl"))
 y_train = joblib.load(os.path.join(FEATURE_PATH, "train_labels.pkl"))
@@ -67,7 +68,10 @@ print(classification_report(y_val, y_pred))
 
 os.makedirs("models", exist_ok=True)
 
-joblib.dump(svm,    "models/svm_cnn_model.pkl")
-joblib.dump(scaler, "models/cnn_scaler.pkl")
+# joblib.dump(svm,    "models/svm_cnn_model.pkl")
+# joblib.dump(scaler, "models/cnn_scaler.pkl")
+
+joblib.dump(svm,    "models/svm_mobilenet_model.pkl")
+joblib.dump(scaler, "models/mobilenet_scaler.pkl")
 
 print("SVM CNN model and scaler saved successfully!")
