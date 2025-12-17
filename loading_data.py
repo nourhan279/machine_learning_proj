@@ -23,7 +23,7 @@ def load_raw_images():
 
         for img_name in os.listdir(folder_path):
             img_path = os.path.join(folder_path, img_name)
-            img = cv2.imread(img_path)   # RAW RGB IMAGE
+            img = cv2.imread(img_path)   # RAW BGR IMAGE
 
             if img is None:
                 continue
