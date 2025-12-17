@@ -18,7 +18,7 @@ print("Validation features:",X_val.shape)
 
 
 #Feacture Scaling
-scaler = MinMaxScaler()
+scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_val_scaled = scaler.transform(X_val)
 
@@ -41,16 +41,6 @@ print(classification_report(y_val, val_pred,target_names=class_names, zero_divis
 
 
 #---------------------------------------- unknown class ------------------------------------------------
-# Create 5 samples of unknown images
-fake_unknown_images = np.random.uniform(low=10.0, high=20.0, size=(5, 1280))
-
-# Combine validation data with fake one
-X_test_combined = np.vstack([X_val, fake_unknown_images])
-y_test_combined = np.concatenate([y_val, np.full(5, 6)])
-
-print(f"\nCreated combined test set: {X_test_combined.shape[0]} total samples.")
-
-
 #unknown class detection
 def predict_with_unknown_knn(model,scaler, X, distance_threshold):
     X_scaled = scaler.transform(X)
@@ -66,19 +56,19 @@ def predict_with_unknown_knn(model,scaler, X, distance_threshold):
 
 
 # Use the original scaled validation data to check distance values
-distances, index = knn.kneighbors(X_val_scaled, n_neighbors=1)
+distances, _ = knn.kneighbors(X_val_scaled, n_neighbors=1)
 print("Distance(Known Val Set) min, mean, max:", distances.min(), distances.mean(), distances.max())
-#choose threshold above the maximum distance (6) by small value 
+#increase from max little bit
+DISTANCE_THRESHOLD = np.max(distances) * 1.1 
 
-DISTANCE_THRESHOLD = 8
-
+labels_to_show = [0, 1, 2, 3, 4, 5, 6]
 
 #prediction
-val_pred_unknown_combined = predict_with_unknown_knn(knn,scaler,X_test_combined, DISTANCE_THRESHOLD)
-acc2=accuracy_score(y_test_combined,val_pred_unknown_combined)
+val_pred_unknown_combined = predict_with_unknown_knn(knn,scaler,X_val, DISTANCE_THRESHOLD)
+acc2=accuracy_score(y_val,val_pred_unknown_combined)
 print("\n Validation Accuracy (including Unknown class):", acc2)
 class_names2 = ['Glass( 0)', 'Paper (1)', 'Cardboard (2)', 'Plastic (3)', 'Metal (4)', 'Trash (5)', 'Unknown (6)']
-print(classification_report(y_test_combined, val_pred_unknown_combined, target_names=class_names2, zero_division=0)) 
+print(classification_report(y_val, val_pred_unknown_combined,labels=labels_to_show, target_names=class_names2, zero_division=0)) 
 
 
 #save the models
