@@ -44,15 +44,35 @@ print("Training SVM")
 svm.fit(X_train_scaled, y_train)
 
 
+# Unknown class detection function
+def predict_with_unknown(model, X_scaled, threshold=0.5):
+    scores = model.decision_function(X_scaled)
+    confidence = np.max(scores, axis=1)
+    predictions = model.predict(X_scaled)
+
+    predictions_with_unknown = np.where(confidence < threshold, 6, predictions)
+
+    return predictions_with_unknown
+
+
+
 
 # Evaluate
-
 y_pred = svm.predict(X_val_scaled)
 
 acc = accuracy_score(y_val, y_pred)
 print(f"\nValidation Accuracy: {acc:.4f}\n")
+print(f"minimum confidence scores: {np.min(svm.decision_function(X_val_scaled))}")
+print(f"maximum confidence scores: {np.max(svm.decision_function(X_val_scaled))}")
 print("Classification Report:")
 print(classification_report(y_val, y_pred))
+
+# Unknown class detection evaluation
+y_pred_unknown = predict_with_unknown(svm, X_val_scaled, 0.5)
+acc_unknown = accuracy_score(y_val, y_pred_unknown)
+print(f"\nValidation Accuracy with Unknown Detection: {acc_unknown:.4f}\n")
+print("Classification Report with Unknown Detection:")
+print(classification_report(y_val, y_pred_unknown))
 
 
 # Save Model + Scaler

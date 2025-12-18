@@ -4,13 +4,16 @@ import numpy as np
 import joblib
 from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 
+CLASS_NAMES = ["Glass", "Paper", "Cardboard", "Plastic", "Metal", "Trash"]
+
 def predict(dataFilePath, bestModelPath):
     
     predictions = []
+    threshold = 4
     
     # 1. Load the Model & Scaler
     try:
-        svm_model = joblib.load(bestModelPath)
+        best_model = joblib.load(bestModelPath)
         scaler = joblib.load("models/mobilenet_scaler.pkl")
     except Exception as e:
         return f"Error loading models: {e}"
@@ -43,21 +46,25 @@ def predict(dataFilePath, bestModelPath):
         X = np.expand_dims(img, axis=0).astype("float32")
         X_preprocessed = preprocess_input(X)
 
-        # --- FEATURE EXTRACTION ---
+        # Feature Extraction
         features = cnn_model.predict(X_preprocessed, verbose=0) # Result: (1, 1280)
 
-        # --- SVM INFERENCE ---
+        # Scale Features & Predict
         features_scaled = scaler.transform(features)
-        scores = svm_model.decision_function(features_scaled)[0]
+        scores = best_model.decision_function(features_scaled)
         
-        predicted_idx = np.argmax(scores)
-        max_score = scores[predicted_idx]
+        # Get confidence and predicted class
+        confidence = np.max(scores, axis=1)[0]
+        pred_class = best_model.predict(features_scaled)[0]
 
-        # Apply threshold
-        if max_score < 0.6:
-            predictions.append(6) # Unknown
-        else:
-            predictions.append(int(predicted_idx))
+        # Determine final label with unknown class handling
+        label = (
+            "Unknown"
+            if confidence < threshold
+            else CLASS_NAMES[pred_class]
+        )
+
+        predictions.append(label)
 
     return predictions
 
