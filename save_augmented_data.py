@@ -29,7 +29,7 @@ def zoom(img):
     cropped = img[top:top+nh, left:left+nw]
     return cv2.resize(cropped, (w, h))
 
-def save_augmented_images(X, y, percentage=0.3):
+def save_augmented_images(X, y, percentage=0.6):
     total_new = int(len(X) * percentage)
 
     for i in range(total_new):
