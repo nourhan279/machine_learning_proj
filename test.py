@@ -4,17 +4,20 @@ import numpy as np
 import joblib
 from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 
-CLASS_NAMES = ["Glass", "Paper", "Cardboard", "Plastic", "Metal", "Trash"]
-
 def predict(dataFilePath, bestModelPath):
     
     predictions = []
-    threshold = 4
     
-    # 1. Load the Model & Scaler
+    # 1. Load the Model 
     try:
-        best_model = joblib.load(bestModelPath)
-        scaler = joblib.load("models/mobilenet_scaler.pkl")
+        
+        metadata = joblib.load(bestModelPath)
+
+        # Extract components from the dictionary
+        model = metadata["model"]
+        scaler = metadata["scaler"]
+        threshold = metadata["threshold"]
+        classes = metadata["classes"]
     except Exception as e:
         return f"Error loading models: {e}"
 
@@ -51,22 +54,20 @@ def predict(dataFilePath, bestModelPath):
 
         # Scale Features & Predict
         features_scaled = scaler.transform(features)
-        scores = best_model.decision_function(features_scaled)
-        
+        scores = model.decision_function(features_scaled)
+         
         # Get confidence and predicted class
         confidence = np.max(scores, axis=1)[0]
-        pred_class = best_model.predict(features_scaled)[0]
-
+        pred_class = model.predict(features_scaled)[0]
+        
         # Determine final label with unknown class handling
-        label = (
-            "Unknown"
-            if confidence < threshold
-            else CLASS_NAMES[pred_class]
-        )
-
+        if confidence < threshold:
+            label = "Unknown"
+        else:
+            label = classes[pred_class]
         predictions.append(label)
 
     return predictions
 
-results = predict("dataFilePath/testml", "models/svm_mobilenet_model.pkl")
+results = predict("dataFilePath/testml", "models/final_svm_package.pkl")
 print(results)

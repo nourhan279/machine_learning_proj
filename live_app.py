@@ -10,8 +10,13 @@ from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 
 print("Loading trained model components...")
 try:
-    svm = joblib.load("models/svm_mobilenet_model.pkl") 
-    scaler = joblib.load("models/mobilenet_scaler.pkl")
+    metadata = joblib.load("models/final_svm_package.pkl")
+
+    # Extract components from the dictionary
+    model = metadata["model"]
+    scaler = metadata["scaler"]
+    threshold = metadata["threshold"]
+    classes = metadata["classes"]
     print("Models and Scaler loaded successfully.")
 except FileNotFoundError:
     print("Error: Model files not found in 'models/' folder.")
@@ -42,12 +47,12 @@ def classify_frame(frame_features):
     X_scaled = scaler.transform(X_sample)
     
     # Use decision_function for confidence scores
-    scores = svm.decision_function(X_scaled)[0] 
+    scores = model.decision_function(X_scaled)[0] 
     max_score = np.max(scores)
     predicted_class_index = np.argmax(scores)
     
-    # Threshold logic (0.6 is a good starting point for RBF SVM)
-    if max_score < 0.6:
+    # Threshold logic 
+    if max_score < threshold:
         final_prediction_index = 6 
     else:
         final_prediction_index = predicted_class_index

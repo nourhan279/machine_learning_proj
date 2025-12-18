@@ -42,7 +42,7 @@ svm.fit(X_train_scaled, y_train)
 
 
 # Unknown class detection function
-def predict_with_unknown(model, X_scaled, threshold=0.5):
+def predict_with_unknown(model, X_scaled, threshold):
     scores = model.decision_function(X_scaled)
 
     confidence = np.max(scores, axis=1)
@@ -57,16 +57,52 @@ y_pred = svm.predict(X_val_scaled)
 
 acc = accuracy_score(y_val, y_pred)
 print(f"\nValidation Accuracy: {acc:.4f}")
+scores = svm.decision_function(X_val_scaled)
 
-# Unknown class detection evaluation
-y_pred_unknown = predict_with_unknown(svm, X_val_scaled, 0.5)
-acc_unknown = accuracy_score(y_val, y_pred_unknown)
-print(f"\nValidation Accuracy with Unknown Detection: {acc_unknown:.4f}")
+
+# Calculate confidence scores for the validation set
+val_scores = np.max(svm.decision_function(X_val_scaled), axis=1)
+
+# Calculate Mean and Standard Deviation
+mu = np.mean(val_scores)
+std = np.std(val_scores)
+
+# We define the threshold 
+
+buffer = max(3 * std, mu * 0.05)
+optimal_threshold = mu - buffer
+
+print(f"--- Statistical Analysis ---")
+print(f"Mean Confidence: {mu:.4f}")
+print(f"Confidence StdDev: {std:.4f}")
+print(f"Mathematically Derived Threshold: {optimal_threshold:.4f}")
+
+# Apply the new threshold
+y_pred_final = predict_with_unknown(svm, X_val_scaled, threshold=optimal_threshold)
+
+print(f"\n--- Final Model Performance ---")
+print(classification_report(y_val, y_pred_final,labels=[0, 1, 2, 3, 4, 5, 6], target_names=[
+    "Class 0", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Unknown (6)"
+]))
+
+# Check how many were labeled as unknown
+unknown_count = np.sum(y_pred_final == 6)
+print(f"Samples categorized as 'Unknown': {unknown_count} out of {len(y_val)}")
+
 
 # Save Model + Scaler
 os.makedirs("models", exist_ok=True)
+# Create a metadata dictionary
+model_metadata = {
+    "model": svm,
+    "scaler": scaler,
+    "threshold": optimal_threshold,
+    "feature_type": "MobileNetV2",
+    "classes": ["Class 0", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Unknown"]
+}
 
-joblib.dump(svm,    "models/svm_mobilenet_model.pkl")
-joblib.dump(scaler, "models/mobilenet_scaler.pkl")
+# Save 
+joblib.dump(model_metadata, "models/final_svm_package.pkl")
+print("\nFinal package with adaptive threshold saved to 'models/final_svm_package.pkl'")
 
-print("SVM CNN model and scaler saved successfully")
+
