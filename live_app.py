@@ -5,13 +5,11 @@ import time
 from keras.models import Model
 from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
 
-# ============================
-# 1. INITIALIZATION & LOADING
-# ============================
+
+#INITIALIZATION & LOADING
 
 print("Loading trained model components...")
 try:
-    # Make sure these filenames match exactly what you saved in svm_cnn.py
     svm = joblib.load("models/svm_mobilenet_model.pkl") 
     scaler = joblib.load("models/mobilenet_scaler.pkl")
     print("Models and Scaler loaded successfully.")
@@ -26,7 +24,7 @@ CLASS_LABELS = {
 
 IMAGE_SIZE = (224, 224) 
 
-# --- Load MobileNetV2 Feature Extractor ---
+#Load MobileNetV2 Feature Extractor
 print("Loading MobileNetV2 feature extractor...")
 # pooling='avg' ensures we get the 1280-dim feature vector automatically
 cnn_model = MobileNetV2(
@@ -36,9 +34,8 @@ cnn_model = MobileNetV2(
     input_shape=(224, 224, 3)
 )
 
-# ============================
-# 2. CORE PREDICTION FUNCTION
-# ============================
+
+#PREDICTION FUNCTION
 
 def classify_frame(frame_features):
     X_sample = frame_features.reshape(1, -1)
@@ -57,9 +54,8 @@ def classify_frame(frame_features):
 
     return CLASS_LABELS[final_prediction_index], max_score
 
-# ============================
-# 3. MAIN REAL-TIME LOOP
-# ============================
+
+#MAIN REAL TIME LOOP
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -81,26 +77,26 @@ while True:
     
     classification_frame_count += 1
 
-    # Logic: Only run the heavy CNN every 5th frame to keep FPS high
+    #Only run the heavy CNN every 5th frame to keep FPS high
     if classification_frame_count % 5 == 0:
-        # 1. Resize
+        #Resize
         processed_frame = cv2.resize(frame, IMAGE_SIZE) 
         
-        # 2. Prepare for Keras (1, 224, 224, 3)
-        # MobileNetV2 needs BGR to RGB conversion for best accuracy
+        #Prepare for Keras (1, 224, 224, 3)
+        # MobileNetV2 BGR to RGB conversion for best accuracy
         rgb_frame = cv2.cvtColor(processed_frame, cv2.COLOR_BGR2RGB)
         X_sample = np.expand_dims(rgb_frame, axis=0).astype("float32")
 
-        # 3. MobileNetV2 Specific Preprocessing
+        #MobileNetV2 Specific Preprocessing
         X_processed = preprocess_input(X_sample)
 
-        # 4. Extract 1280-dim Features
+        #Extract 1280-dim Features
         features = cnn_model.predict(X_processed, verbose=0)[0]
         
-        # 5. SVM Prediction
+        # SVM Prediction
         last_label, last_confidence = classify_frame(features)
         
-    # --- Visualization ---
+    #Visualization
     text = f"Pred: {last_label} (Conf: {last_confidence:.2f})"
     color = (0, 255, 0) if last_label != "Unknown" else (0, 165, 255)
     cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
