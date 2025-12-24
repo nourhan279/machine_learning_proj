@@ -3,10 +3,21 @@ import cv2
 import numpy as np
 import joblib
 from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
+import pandas as pd
 
-def predict(dataFilePath, bestModelPath):
+def predict(bestModelPath):
+    dataFilePath = input("Enter File Path: ")
     
     predictions = []
+
+    CLASS_NAMES = [
+    "Glass",
+    "Paper",
+    "Cardboard",
+    "Plastic",
+    "Metal",
+    "Trash"
+    ]
     
     # 1. Load the Model 
     try:
@@ -17,7 +28,6 @@ def predict(dataFilePath, bestModelPath):
         model = metadata["model"]
         scaler = metadata["scaler"]
         threshold = metadata["threshold"]
-        classes = metadata["classes"]
     except Exception as e:
         return f"Error loading models: {e}"
 
@@ -64,10 +74,17 @@ def predict(dataFilePath, bestModelPath):
         if confidence < threshold:
             label = "Unknown"
         else:
-            label = classes[pred_class]
-        predictions.append(label)
+            label = CLASS_NAMES[pred_class]
+        predictions.append({"ImageName": img_name, "predictedlabel": label})
 
     return predictions
 
-results = predict("dataFilePath/testml", "models/final_svm_package.pkl")
-print(results)
+results = predict("models/final_svm_package.pkl")
+
+try:
+    df = pd.DataFrame(results)
+    df.to_excel("ml_output.xlsx", index=False)
+    print("Results saved to ml_output.xlsx")
+except Exception as e:
+    print(f"Error saving results to Excel: {e}")
+    
