@@ -18,8 +18,6 @@ def preprocess_image(img, size=(224, 224)):
     return img
 
 def preprocess_and_save():
-    X = []
-    y = []
 
     # Process original raw dataset
     for folder, label in CLASS_NAMES.items():
