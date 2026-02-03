@@ -1,24 +1,22 @@
 import os
 import cv2
-import numpy as np
 
-RAW_PATH = "dataset/"
-
-CLASS_NAMES = {
-    "Glass": 0,
-    "Paper": 1,
-    "Cardboard": 2,
-    "Plastic": 3,
-    "Metal": 4,
-    "Trash": 5
-}
+RAW_PATH = "Fruit_dataset/train1/"
 
 def load_raw_images():
-    X = []
-    y = []
-    paths = []
+    X, y, paths = [], [], []
 
-    for folder, label in CLASS_NAMES.items():
+    # Automatically detect class folders
+    class_names = sorted([
+        d for d in os.listdir(RAW_PATH)
+        if os.path.isdir(os.path.join(RAW_PATH, d))
+    ])
+
+    # Create label mapping dynamically
+    class_to_label = {cls_name: idx for idx, cls_name in enumerate(class_names)}
+
+
+    for folder, label in class_to_label.items():
         folder_path = os.path.join(RAW_PATH, folder)
 
         for img_name in os.listdir(folder_path):
@@ -32,7 +30,8 @@ def load_raw_images():
             y.append(label)
             paths.append(img_path)
 
-    return X, y, paths
+    return X, y, paths, class_to_label
 
-X_raw, y_raw, raw_paths = load_raw_images()
+
+X_raw, y_raw, raw_paths, class_map = load_raw_images()
 print("Loaded RAW images:", len(X_raw))

@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np 
-from loading_data import CLASS_NAMES, RAW_PATH
+from loading_data import class_map, RAW_PATH
 from save_augmented_data import AUG_PATH
 
 PROCESSED_PATH = "data/processed/"
@@ -20,7 +20,7 @@ def preprocess_image(img, size=(224, 224)):
 def preprocess_and_save():
 
     # Process original raw dataset
-    for folder, label in CLASS_NAMES.items():
+    for folder, label in class_map.items():
         folder_path = os.path.join(RAW_PATH, folder)
         if not os.path.exists(folder_path): continue
         

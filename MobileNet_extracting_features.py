@@ -54,12 +54,20 @@ cnn_model = MobileNetV2(
     input_shape=(224, 224, 3)
 )
 
-def extract_cnn_features(model, X):
-    # Use the MobileNetV2 specific preprocessing
-    X = preprocess_input(X.astype("float32"))
-    # MobileNetV2 is much faster at prediction
-    features = model.predict(X, batch_size=32, verbose=1)
-    return features
+def extract_cnn_features(model, X, batch_size=32):
+    features = []
+
+    for i in range(0, len(X), batch_size):
+        batch = X[i:i+batch_size].astype("float32")
+        batch = preprocess_input(batch)
+
+        batch_features = model.predict(batch, verbose=0)
+        features.append(batch_features)
+
+        print(f"Processed {i+len(batch)}/{len(X)}")
+
+    return np.vstack(features)
+
 
 print("Extracting MobileNetV2 features...")
 X_train_cnn = extract_cnn_features(cnn_model, X_train)
